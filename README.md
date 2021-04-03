@@ -11,8 +11,12 @@ Of course feedback is welcome!
 CIDR calculation inspired by: https://stackoverflow.com/questions/59156309/how-to-get-from-to-ip-address-from-cidr-bigquery
 
 ## Usage:
-Just open that HTML file in a browser. I worked on Chrome..
+Just open my `subnet_calc.html` file in a browser. I worked on Chrome..
+
+Hey I just learned a new trick! Click here, and it'll open the HTML directly from the Github repo: https://raw.githack.com/doronlevari/supernet/main/subnet_calc.html
+
 
 
 Enjoy,
+
 Doron
