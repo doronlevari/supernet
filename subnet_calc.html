@@ -3,53 +3,54 @@
     <style>
         table, th, td {
             border: 1px solid black;
+            padding: 5px;
         }
     </style>
 
     <script>
         function doStuff() {
-            var address = document.getElementById("address").value;
-            var supernet = parseInt(document.getElementById("supernet").value);
-            var subnet = parseInt(document.getElementById("subnet").value);
-            var start = document.getElementById("start").value ? parseInt(document.getElementById("start").value) : 0;
-            var count = document.getElementById("count").value ? parseInt(document.getElementById("count").value) : -1;
+            var address = document.getElementById('address').value;
+            var supernet = parseInt(document.getElementById('supernet').value);
+            var subnet = parseInt(document.getElementById('subnet').value);
+            var start = document.getElementById('start').value ? parseInt(document.getElementById('start').value) : 0;
+            var count = document.getElementById('count').value ? parseInt(document.getElementById('count').value) : -1;
 
             var outputArray = [];
 
             var supernetStart = address;
             var supernetEnd = getCidrEnd(supernetStart, supernet);
 
-            outputArray.push(["supernet: ", supernetStart, supernetEnd]);
-            outputArray.push([""]);
+            outputArray.push(['supernet: ', supernetStart, supernetEnd]);
+            outputArray.push(['==========']);
 
             var currentSubnetStart = supernetStart;
             var i = 0;
-            while (ipTextToNum(currentSubnetStart) < ipTextToNum(supernetEnd)) {
+            while (ipTextToNum(currentSubnetStart) <= ipTextToNum(supernetEnd)) {
                 i++;
                 var subnetEnd = getCidrEnd(currentSubnetStart, subnet);
 
-                outputArray.push(["subnet "+i+": ", currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), count == -1 ? subnetEnd : addToIp(currentSubnetStart, start+count)]);
+                outputArray.push(['subnet '+i+': ', currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), count == -1 ? subnetEnd : addToIp(currentSubnetStart, start+count)]);
                 currentSubnetStart = addToIp(subnetEnd, 1);
             }
 
             // output, the ugly way...
-            output = "Total subnets: " + i;
-            output += "<br><br>";
-            output += "<table>";
-            output += "<tr>";
-            output += '<th style="padding:5px"></th><th colspan="2">global</th><th colspan="2">with Range Start and Num Addresses</th><tr>';
-            output += '<th style="padding:5px"></th><th>Start</th><th>End</th><th>Start</th><th>End</th><tr>';
+            output = 'Total subnets: ' + i;
+            output += '<br><br>';
+            output += '<table>';
+            output += '<tr>';
+            output += '<th></th><th colspan="2">global</th><th colspan="2">with Range Start and Num Addresses</th><tr>';
+            output += '<th></th><th>Start</th><th>End</th><th>Start</th><th>End</th><tr>';
             outputArray.forEach(function (line, index) {
-                output += "<tr>";
+                output += '<tr>';
                 line.forEach(function (col, index2) {
-                    output += '<td style="padding:5px">';
+                    output += '<td>';
                     output += col;
-                    output += "</td>";
+                    output += '</td>';
                 });
-                output += "</tr>";
+                output += '</tr>';
             });
-            output += "</table>";
-            document.getElementById("mydiv").innerHTML = output;
+            output += '</table>';
+            document.getElementById('mydiv').innerHTML = output;
         }
 
         function ipTextToNum(iptext) {
@@ -73,6 +74,33 @@
             var end = Array.apply([],new Uint8Array(buf)).reverse().join('.');
             return end;
         }
+
+        function canned1() {
+            document.getElementById('address').value = '192.168.0.0';
+            document.getElementById('supernet').value = 16;
+            document.getElementById('subnet').value = 24;
+            document.getElementById('start').value = 50;
+            document.getElementById('count').value = 150;
+            doStuff();
+        }
+        function canned2() {
+            document.getElementById('address').value = '192.168.0.0';
+            document.getElementById('supernet').value = 24;
+            document.getElementById('subnet').value = 30;
+            document.getElementById('start').value = 1;
+            document.getElementById('count').value = '';
+            doStuff();
+        }
+        function canned3() {
+            document.getElementById('address').value = '10.0.0.1';
+            document.getElementById('supernet').value = 30;
+            document.getElementById('subnet').value = 32;
+            document.getElementById('start').value = '';
+            document.getElementById('count').value = '';
+            doStuff();
+        }
+
+
     </script>
 </head>
 <body>
@@ -81,9 +109,10 @@
 Or... Doron was curious... :)
 <br>
 <br>
-Use at your own risk, absolutely no validity checks...
+Change input fields below and click the "Calculate!". Use at your own risk, absolutely no validitations... 
 <br>
-
+Alternatively, click one of the "canned example" buttons
+<br>
 <table>
     <tr><td><label for="address">Address:</label></td>
     <td><input type="text" id="address" name="address" value="192.168.0.0"></td>
@@ -102,7 +131,10 @@ Use at your own risk, absolutely no validity checks...
     <td>(optional) actual number of addresses in each subnet</td></tr>
 </table>
 <br>
-<button onclick="doStuff()">Calculate!</button>
+
+<pre>
+<button onclick="doStuff()">Calculate!</button>                                                                                       <button onclick="canned1()">Canned example 1</button> <button onclick="canned2()">Canned example 2</button> <button onclick="canned3()">Canned example 3</button>
+</pre>
 <br><br>
   
 <div id="mydiv"></div>
