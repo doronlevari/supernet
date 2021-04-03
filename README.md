@@ -10,4 +10,9 @@ Of course feedback is welcome!
 
 CIDR calculation inspired by: https://stackoverflow.com/questions/59156309/how-to-get-from-to-ip-address-from-cidr-bigquery
 
+## Usage:
+Just open that HTML file in a browser. I worked on Chrome..
+
+
+Enjoy,
 Doron
