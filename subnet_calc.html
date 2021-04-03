@@ -1,0 +1,114 @@
+<html>
+<head>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+    </style>
+
+    <script>
+        function doStuff() {
+            var address = document.getElementById("address").value;
+            var supernet = parseInt(document.getElementById("supernet").value);
+            var subnet = parseInt(document.getElementById("subnet").value);
+            var start = parseInt(document.getElementById("start").value);
+            var count = parseInt(document.getElementById("count").value);
+
+            var outputArray = [];
+
+            var supernetStart = address;
+            var supernetEnd = getCidrEnd(supernetStart, supernet);
+
+            outputArray.push(["supernet: ", supernetStart, supernetEnd]);
+            outputArray.push([""]);
+
+            var currentSubnetStart = supernetStart;
+            var i = 0;
+            while (ipTextToNum(currentSubnetStart) < ipTextToNum(supernetEnd)) {
+                i++;
+                var subnetEnd = getCidrEnd(currentSubnetStart, subnet);
+
+                outputArray.push(["subnet "+i+": ", currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), addToIp(currentSubnetStart, start+count)]);
+                currentSubnetStart = addToIp(subnetEnd, 1);
+            }
+
+            // output, the ugly way...
+            output = "Total subnets: " + i;
+            output += "<br><br>";
+            output += "<table>";
+            output += "<tr>";
+            output += '<th style="padding:5px"></th><th colspan="2">global</th><th colspan="2">with Range Start and Num Addresses</th><tr>';
+            output += '<th style="padding:5px"></th><th>Start</th><th>End</th><th>Start</th><th>End</th><tr>';
+            outputArray.forEach(function (line, index) {
+                output += "<tr>";
+                line.forEach(function (col, index2) {
+                    output += '<td style="padding:5px">';
+                    output += col;
+                    output += "</td>";
+                });
+                output += "</tr>";
+            });
+            output += "</table>";
+            document.getElementById("mydiv").innerHTML = output;
+        }
+
+        function ipTextToNum(iptext) {
+            var sub = iptext.split('.').map(function(a) {return parseInt(a)} );
+            var i32 = new Uint32Array(new ArrayBuffer(4));
+            i32[0]  = (sub[0]<<24) + (sub[1]<<16) + (sub[2]<<8) + (sub[3]);
+            return i32[0];
+        }
+
+        function getCidrEnd(ip, cidrSubnet) {
+            var addition = (1<<(32-cidrSubnet))-1; 
+            return addToIp(ip, addition);
+        }
+
+        function addToIp(ip, addition) {
+            var sub = ip.split('.').map(function(a){return parseInt(a)});
+            var buf = new ArrayBuffer(4); 
+            var i32 = new Uint32Array(buf); 
+            i32[0] = (sub[0]<<24) + (sub[1]<<16) + (sub[2]<<8) + (sub[3]);
+
+            i32[0] += addition;
+            //Recombine into an IPv4 string:
+            var end = Array.apply([],new Uint8Array(buf)).reverse().join('.');
+            return end;
+        }
+    </script>
+
+</head>
+<body>
+
+<h2>The Supernet and Subnets calculatinator!</h2>
+Or... Doron was curious... :)
+<br>
+<br>
+Use at your own risk, absolutely no validity checks...
+<br>
+
+<table>
+    <tr><td><label for="address">Address:</label></td>
+    <td><input type="text" id="address" name="address" value="192.168.0.0"></td>
+    <td>the address component to be used for the supernet and subnet. If your CIDR is 192.168.0.1/32, then this will be the 192.168.0.1 part..</td></tr>
+    <tr><td><label for="supernet">Supernet:</label></td>
+    <td><input type="text" id="supernet" name="supernet" value="16"></td>
+    <td>CIDR suffix to determine the size of the supernet, should be bigger than its subnets, so this input should be smaller than your "Subnet" input</td></tr>
+    <tr><td><label for="subnet">Subnet:</label></td>
+    <td><input type="text" id="subnet" name="subnet" value="24"></td>
+    <td>CIDR suffix to determine the size of each subnet in the supernet. This input should be smaller than your "Supernet" input</td></tr>
+    <tr><td><label for="start">Range Start:</label></td>
+    <td><input type="text" id="start" name="start" value="50"></td>
+    <td>out of all IPs in the subnet range, start with this Nth IP address</td></tr>
+    <tr><td><label for="count">Number of Addresses:</label></td>
+    <td><input type="text" id="count" name="count" value="100"></td>
+    <td>actual number of addresses in each subnet</td></tr>
+</table>
+<br>
+<button onclick="doStuff()">Calculate!</button>
+<br><br>
+  
+<div id="mydiv"></div>
+
+</body>
+</html> 
