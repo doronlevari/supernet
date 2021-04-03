@@ -11,8 +11,8 @@
             var address = document.getElementById("address").value;
             var supernet = parseInt(document.getElementById("supernet").value);
             var subnet = parseInt(document.getElementById("subnet").value);
-            var start = parseInt(document.getElementById("start").value);
-            var count = parseInt(document.getElementById("count").value);
+            var start = document.getElementById("start").value ? parseInt(document.getElementById("start").value) : 0;
+            var count = document.getElementById("count").value ? parseInt(document.getElementById("count").value) : -1;
 
             var outputArray = [];
 
@@ -28,7 +28,7 @@
                 i++;
                 var subnetEnd = getCidrEnd(currentSubnetStart, subnet);
 
-                outputArray.push(["subnet "+i+": ", currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), addToIp(currentSubnetStart, start+count)]);
+                outputArray.push(["subnet "+i+": ", currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), count == -1 ? subnetEnd : addToIp(currentSubnetStart, start+count)]);
                 currentSubnetStart = addToIp(subnetEnd, 1);
             }
 
@@ -60,18 +60,16 @@
         }
 
         function getCidrEnd(ip, cidrSubnet) {
-            var addition = (1<<(32-cidrSubnet))-1; 
-            return addToIp(ip, addition);
+            var off = (1<<(32-cidrSubnet))-1; 
+            return addToIp(ip, off);
         }
 
         function addToIp(ip, addition) {
-            var sub = ip.split('.').map(function(a){return parseInt(a)});
+            var sub = ip.split('.').map(function(a) {return parseInt(a)} );
             var buf = new ArrayBuffer(4); 
             var i32 = new Uint32Array(buf); 
             i32[0] = (sub[0]<<24) + (sub[1]<<16) + (sub[2]<<8) + (sub[3]);
-
             i32[0] += addition;
-            //Recombine into an IPv4 string:
             var end = Array.apply([],new Uint8Array(buf)).reverse().join('.');
             return end;
         }
@@ -98,10 +96,10 @@ Use at your own risk, absolutely no validity checks...
     <td>CIDR suffix to determine the size of each subnet in the supernet. This input should be smaller than your "Supernet" input</td></tr>
     <tr><td><label for="start">Range Start:</label></td>
     <td><input type="text" id="start" name="start" value="50"></td>
-    <td>out of all IPs in the subnet range, start with this Nth IP address</td></tr>
+    <td>(optional) out of all IPs in the subnet range, start with this Nth IP address</td></tr>
     <tr><td><label for="count">Number of Addresses:</label></td>
     <td><input type="text" id="count" name="count" value="100"></td>
-    <td>actual number of addresses in each subnet</td></tr>
+    <td>(optional) actual number of addresses in each subnet</td></tr>
 </table>
 <br>
 <button onclick="doStuff()">Calculate!</button>
