@@ -32,13 +32,19 @@
             }
 
 
+            var totalEffectiveInSubnet = count == -1 ? (Math.pow(2, 32-subnet) - start) : count
+            var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
             // output, the ugly way...
             output = "";
             output += 'Number of addresses in Supernet: ' + Math.pow(2, 32-supernet);
             output += '<br>';
-            output += 'Number of addresses in each Subnet: ' + Math.pow(2, 32-subnet);
+            output += 'Number of addresses in each Subnet\'s range: ' + Math.pow(2, 32-subnet);
             output += '<br>';
-            output += 'Total subnets: ' + Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
+            output += 'Number of effective addresses in each Subnet, adhering to reserves: ' +  totalEffectiveInSubnet;
+            output += '<br>';
+            output += 'Total subnets: ' + subnetsCount;
+            output += '<br>';
+            output += 'Number of effective addresses in supernet: ' +  (totalEffectiveInSubnet * subnetsCount);
             output += '<br><br>';
             output += '<table>';
             output += '<tr>';
@@ -117,42 +123,95 @@
             doStuff();
         }
 
-        function update_basic_fields(value) {
+        function simple_canned1() {
+            document.getElementById('address').value = '192.168.0.0';
+            document.getElementById('total').value = 1000;
+            document.getElementById('nodes').value = 20;
+            document.getElementById('max_per_node').value = '';
+            document.getElementById('reserve_start').value = 10;
+            document.getElementById('reserve_end').value = 10;
+            update_basic_fields();
+        }
+        function simple_canned2() {
+            document.getElementById('address').value = '192.168.0.0';
+            document.getElementById('total').value = 1000;
+            document.getElementById('nodes').value = '';
+            document.getElementById('max_per_node').value = 100;
+            document.getElementById('reserve_start').value = 2;
+            document.getElementById('reserve_end').value = '';
+            update_basic_fields();
+        }
+
+        function update_basic_fields() {
             var total = parseInt(document.getElementById('total').value);
             var nodes = parseInt(document.getElementById('nodes').value);
             var max_per_node = parseInt(document.getElementById('max_per_node').value);
-            var reserve_start = parseInt(document.getElementById('reserve_start').value);
-            var reserve_end = parseInt(document.getElementById('reserve_end').value);
 
+            var reserve_start = document.getElementById('reserve_start').value ? parseInt(document.getElementById('reserve_start').value) : 0;
+            var reserve_end = document.getElementById('reserve_end').value ? parseInt(document.getElementById('reserve_end').value) : 0;
 
-            var supernet = 32 - Math.ceil(Math.log2(total));
+            var supernet;
             var subnet;
+            var addressesInEachSubnet;
 
             if (nodes) {
-                max_per_node = Math.ceil(Math.pow(2, Math.ceil(Math.log2(total))) / nodes)
-                subnet = 32 - Math.ceil(Math.log2(max_per_node));
-                document.getElementById('max_per_node').value = "";
+                document.getElementById('max_per_node').value = '';
+                var totalRequiredAddresses = total + nodes * (reserve_start + reserve_end)
+                supernet = 32 - Math.ceil(Math.log2(totalRequiredAddresses));
+                subnet = 32 - Math.ceil(Math.log2(totalRequiredAddresses / nodes));
             } else if (max_per_node) {
-                subnet = 32 - Math.floor(Math.log2(max_per_node));
+                document.getElementById('nodes').value = '';
+                // calc nodes by closest 2 power number to total / max_per_node
+                var calcNodes = Math.pow(2, Math.ceil(Math.log2(Math.ceil(total / max_per_node))));
+                addressesInEachSubnet = max_per_node + reserve_start + reserve_end;
+                alert(addressesInEachSubnet);
+                var totalRequiredAddresses =  calcNodes * addressesInEachSubnet
+                supernet = 32 - Math.ceil(Math.log2(totalRequiredAddresses));
+                subnet = 32 - Math.ceil(Math.log2(totalRequiredAddresses / calcNodes));
+
+                // alert(addressesInEachSubnet);
             } else {
                 alert("Please enter either 'node' or 'max per node'");
                 return;
             }
 
-            document.getElementById('supernet').value = supernet;
-            document.getElementById('subnet').value = subnet;
             document.getElementById('start').value = '';
             document.getElementById('count').value = '';
+            if (reserve_start) {
+                document.getElementById('start').value = reserve_start;
+            }
+            if (max_per_node || reserve_end) {
+                document.getElementById('count').value = Math.max(max_per_node, Math.pow(2, 32-subnet - reserve_start - reserve_end));
+            }
+
+            // if reserves or user's max_per_node can't fit in the calculated subnet, enlarge nets
+            // var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
+            // if (totalEffectiveInSubnet * subnetsCount < total) {
+            //     supernet--;
+            //     subnet--;
+            // }
+
+
+            document.getElementById('supernet').value = supernet;
+            document.getElementById('subnet').value = subnet;
 
             doStuff();
         }
 
-        // function getBaseLog(x, y) {
-        //     return Math.log(y) / Math.log(x);
-        // }
-
-
-
+        function calcTotalEffectiveInSubnet(supernet, subnet, reserve_start, reserve_end, max_per_node) {
+            var totalEffectiveInSubnet = Math.pow(2, 32-subnet);
+            if (reserve_start) {
+                document.getElementById('start').value = reserve_start;
+                totalEffectiveInSubnet -= reserve_start;
+            }
+            if (reserve_end) {
+                totalEffectiveInSubnet -= reserve_end;
+            }
+            if (max_per_node) {
+                totalEffectiveInSubnet = Math.min(max_per_node, totalEffectiveInSubnet);
+            }
+            return totalEffectiveInSubnet;
+        }
     </script>
 </head>
 <body>
@@ -165,43 +224,22 @@ Change input fields below and click the "Calculate!". Use at your own risk, abso
 <br>
 Alternatively, click one of the "canned example" buttons
 <br>
-<table>
-    <tr><td><label for="address">Address:</label></td>
-    <td><input type="text" id="address" name="address" value="192.168.0.0"></td>
-    <td>the address component to be used for the supernet and subnet. If your CIDR is 192.168.0.1/32, then this will be the 192.168.0.1 part..</td></tr>
-</table>
-</br>
-Simple mode:
-<table>
-    <tr><td><label for="total">Total:</label></td>
-    <td><input type="text" id="total" name="total" value="10000"></td>
-    <td>Total number of addresses needed</td></tr>
-</table>
-</br>
-Either:
-<table>
-    <tr><td><label for="nodes">Nodes:</label></td>
-    <td><input type="text" id="nodes" name="nodes" value="20"></td>
-    <td>Maximum number of nodes</td></tr>
-</table>
-Or:
-<table>
-    <tr><td><label for="max_per_node">Max per node:</label></td>
-    <td><input type="text" id="max_per_node" name="max_per_node"></td>
-    <td>Maximum number of addresses per node</td></tr>
-</table>
-</br>
-Tweak each subnet (optional):
-<table>
-    <tr><td><label for="reserve_start">Reserve at start:</label></td>
-    <td><input type="text" id="reserve_start" name="reserve_start"></td>
-    <td>Number of addresses to reserve at the start of every subnet</td></tr>
-    <tr><td><label for="reserve_end">Reserve at end:</label></td>
-    <td><input type="text" id="reserve_end" name="reserve_end"></td>
-    <td>Number of addresses to reserve at the end of every subnet</td></tr>
-</table>
 <pre>
-<button onclick="update_basic_fields()">Calculate!</button>                                                                                       <button onclick="canned1()">Canned example 1</button> <button onclick="canned2()">Canned example 2</button> <button onclick="canned3()">Canned example 3</button>
+Base Address:                               <input type="text" id="address" name="address" value="192.168.0.0">
+
+Total addresses desired:                    <input type="text" id="total" name="total" value="10000">
+
+Either:
+    Maximum number of nodes:                <input type="text" id="nodes" name="nodes" value="20">
+Or:
+    Maximum number of addresses per node:   <input type="text" id="max_per_node" name="max_per_node">
+
+Optional tweaks:
+    Number of addresses to reserve at the start of every subnet: <input type="text" id="reserve_start" name="reserve_start">
+    Number of addresses to reserve at the end of every subnet:   <input type="text" id="reserve_end" name="reserve_end">
+
+
+<button onclick="update_basic_fields()">Calculate!</button>                                                                                       <button onclick="simple_canned1()">Canned example 1</button> <button onclick="simple_canned2()">Canned example 2</button> <button onclick="simple_canned3()">Canned example 3</button>
 </pre>
 </br></br></br>
 Expert mode:
@@ -225,7 +263,7 @@ Expert mode:
 <button onclick="doStuff()">Calculate!</button>                                                                                       <button onclick="canned1()">Canned example 1</button> <button onclick="canned2()">Canned example 2</button> <button onclick="canned3()">Canned example 3</button>
 </pre>
 <br><br>
-  
+
 <div id="mydiv"></div>
 
 </body>
