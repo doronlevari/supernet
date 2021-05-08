@@ -141,6 +141,16 @@
             update_basic_fields();
         }
 
+        function simple_canned3() {
+            document.getElementById('address').value = '192.168.0.0';
+            document.getElementById('total').value = 1000;
+            document.getElementById('nodes').value = '';
+            document.getElementById('max_per_node').value = 128;
+            document.getElementById('reserve_start').value = '';
+            document.getElementById('reserve_end').value = '';
+            update_basic_fields();
+        }
+
         function update_basic_fields() {
             var total = parseInt(document.getElementById('total').value);
             var nodes = parseInt(document.getElementById('nodes').value);
