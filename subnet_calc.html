@@ -31,7 +31,6 @@
                 currentSubnetStart = addToIp(subnetEnd, 1);
             }
 
-
             var totalEffectiveInSubnet = count == -1 ? (Math.pow(2, 32-subnet) - start) : count
             var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
             // output, the ugly way...
@@ -40,11 +39,11 @@
             output += '<br>';
             output += 'Number of addresses in each Subnet\'s range: ' + Math.pow(2, 32-subnet);
             output += '<br>';
-            output += 'Number of effective addresses in each Subnet, adhering to reserves: ' +  totalEffectiveInSubnet;
-            output += '<br>';
             output += 'Total subnets: ' + subnetsCount;
             output += '<br>';
-            output += 'Number of effective addresses in supernet: ' +  (totalEffectiveInSubnet * subnetsCount);
+            output += 'Number of effective addresses in each Subnet, adhering to reserves: ' +  totalEffectiveInSubnet;
+            output += '<br>';
+            output += 'Number of effective addresses overall: ' +  (totalEffectiveInSubnet * subnetsCount);
             output += '<br><br>';
             output += '<table>';
             output += '<tr>';
@@ -152,45 +151,35 @@
 
             var supernet;
             var subnet;
-            var addressesInEachSubnet;
+            var totalRequiredAddresses;
+            var totalRequiredNodes;
 
             if (nodes) {
                 document.getElementById('max_per_node').value = '';
-                var totalRequiredAddresses = total + nodes * (reserve_start + reserve_end)
-                supernet = 32 - Math.ceil(Math.log2(totalRequiredAddresses));
-                subnet = 32 - Math.ceil(Math.log2(totalRequiredAddresses / nodes));
+                totalRequiredAddresses = total + nodes * (reserve_start + reserve_end)
+                totalRequiredNodes = Math.pow(2, Math.floor(Math.log2(Math.ceil(nodes))));
             } else if (max_per_node) {
                 document.getElementById('nodes').value = '';
-                // calc nodes by closest 2 power number to total / max_per_node
-                var calcNodes = Math.pow(2, Math.ceil(Math.log2(Math.ceil(total / max_per_node))));
-                addressesInEachSubnet = max_per_node + reserve_start + reserve_end;
-                alert(addressesInEachSubnet);
-                var totalRequiredAddresses =  calcNodes * addressesInEachSubnet
-                supernet = 32 - Math.ceil(Math.log2(totalRequiredAddresses));
-                subnet = 32 - Math.ceil(Math.log2(totalRequiredAddresses / calcNodes));
-
-                // alert(addressesInEachSubnet);
+                totalRequiredNodes = Math.pow(2, Math.ceil(Math.log2(Math.ceil(total / max_per_node))));
+                totalRequiredAddresses = totalRequiredNodes * (max_per_node + reserve_start + reserve_end)
             } else {
                 alert("Please enter either 'node' or 'max per node'");
                 return;
             }
+            // calc nodes by closest 2 power number to total / max_per_node
+            supernet = 32 - Math.ceil(Math.log2(totalRequiredAddresses));
+            subnet = 32 - Math.ceil(Math.log2(totalRequiredAddresses / totalRequiredNodes));
 
             document.getElementById('start').value = '';
             document.getElementById('count').value = '';
             if (reserve_start) {
                 document.getElementById('start').value = reserve_start;
             }
-            if (max_per_node || reserve_end) {
-                document.getElementById('count').value = Math.max(max_per_node, Math.pow(2, 32-subnet - reserve_start - reserve_end));
+            if (max_per_node) {
+                document.getElementById('count').value = max_per_node;
+            } else if (reserve_end) {
+                document.getElementById('count').value = Math.pow(2, 32-subnet) - reserve_start - reserve_end;
             }
-
-            // if reserves or user's max_per_node can't fit in the calculated subnet, enlarge nets
-            // var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
-            // if (totalEffectiveInSubnet * subnetsCount < total) {
-            //     supernet--;
-            //     subnet--;
-            // }
-
 
             document.getElementById('supernet').value = supernet;
             document.getElementById('subnet').value = subnet;
