@@ -34,7 +34,7 @@
             var totalEffectiveInSubnet = count == -1 ? (Math.pow(2, 32-subnet) - start) : count
             var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
             // output, the ugly way...
-            output = "";
+            var output = '';
             output += 'Number of addresses in Supernet: ' + Math.pow(2, 32-supernet);
             output += '<br>';
             output += 'Number of addresses in each Subnet\'s range: ' + Math.pow(2, 32-subnet);
@@ -188,6 +188,10 @@
             var totalRequiredAddresses;
             var totalRequiredNodes;
 
+            // Find the number of nodes and number of addresses per node to adhere to user's request either by max nodes ot addrs per node.
+            // note the floor vs ceil on the arriving to the closest 2-power:
+            // when the user gives max nodes - I want the highest but never over the user's requested max nodes
+            // when the user gives max addrs per node - I want a high enough number to accommodate user's request
             if (nodes) {
                 document.getElementById('max_per_node').value = '';
                 totalRequiredAddresses = total + nodes * (reserve_start + reserve_end)
@@ -220,21 +224,6 @@
             }
 
             doStuff();
-        }
-
-        function calcTotalEffectiveInSubnet(supernet, subnet, reserve_start, reserve_end, max_per_node) {
-            var totalEffectiveInSubnet = Math.pow(2, 32-subnet);
-            if (reserve_start) {
-                document.getElementById('start').value = reserve_start;
-                totalEffectiveInSubnet -= reserve_start;
-            }
-            if (reserve_end) {
-                totalEffectiveInSubnet -= reserve_end;
-            }
-            if (max_per_node) {
-                totalEffectiveInSubnet = Math.min(max_per_node, totalEffectiveInSubnet);
-            }
-            return totalEffectiveInSubnet;
         }
     </script>
 </head>
