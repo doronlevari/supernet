@@ -21,18 +21,19 @@
             var supernetEnd = getCidrEnd(supernetStart, supernet);
 
             outputArray.push(['supernet: ', supernetStart, supernetEnd]);
-            outputArray.push(['==========']);
+            outputArray.push(['']);
 
             var currentSubnetStart = supernetStart;
+            var i = 0;
             while (ipTextToNum(currentSubnetStart) <= ipTextToNum(supernetEnd)) {
                 var subnetEnd = getCidrEnd(currentSubnetStart, subnet);
 
-                outputArray.push(['subnet '+i+': ', currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), count == -1 ? subnetEnd : addToIp(currentSubnetStart, start+count)]);
+                outputArray.push(['subnet '+ ++i +': ', currentSubnetStart, subnetEnd, addToIp(currentSubnetStart, start), count == -1 ? subnetEnd : addToIp(currentSubnetStart, start+count)]);
                 currentSubnetStart = addToIp(subnetEnd, 1);
             }
 
             var totalEffectiveInSubnet = count == -1 ? (Math.pow(2, 32-subnet) - start) : count
-            var subnetsCount = Math.pow(2, 32-supernet)/Math.pow(2, 32-subnet);
+            var subnetsCount = Math.pow(2, subnet-supernet);
             // output, the ugly way...
             var output = '';
             output += 'Number of addresses in Supernet: ' + Math.pow(2, 32-supernet);
@@ -152,7 +153,6 @@
             document.getElementById('reserve_end').value = '';
             exec_simple();
         }
-
         function simple_canned3() {
             clean_all_fields();
             document.getElementById('saddress').value = '192.168.0.0';
@@ -229,7 +229,7 @@
 </head>
 <body>
 
-<h2>The Supernet and Subnets calculatinator!</h2>
+<h2>Behold! The Supernet and Subnets calculatinator!</h2>
 Or... Doron was curious... :)
 <br><br>
 Change input fields below and click the "Calculate!". Use at your own risk, absolutely no validitations... 
